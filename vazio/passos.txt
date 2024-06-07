@@ -1,0 +1,158 @@
+
+Terminal
+
+- composer create-project laravel/laravel : para criar o projeto laravel
+- cd laravel/ : para abrir a pasta do laravel no projeto
+- php artisan serve : para iniciar o servidor
+- php artisan make:controller nomeController : para criar um controller novo
+
+routes/web.php
+- use App\Http\Controllers\HelloController; : para conseguir chamar a classe do controller
+- Route::get('/hello/{name?}', [HelloController::class, 'index']); : para chamar o controller nome::class, "funcao do controller"
+
+app/http/Controllers/HelloController
+
+- no controller, chama a view, passando como parametro o nome do arquivo e as variaveis necessárias dentro de um array, que deve estar em resources/views/arquivo: return view('hello');
+
+resources/views/
+
+- Crie o arquivo para a view, no exmplo: hello.php
+- O arquivo pode ser criado como hello.blade.php : assim, não é necessario usar a sintaxe do <?php echo $n;?> dentrro do html, posso usar apenas {{$n}}
+
+app/providres
+
+coloque: use Illuminate\Support\Facades\Schema;
+
+adicione ao metodo boot: Schema::defaultStringLength(191);
+
+Terminal
+
+- php artisan make:model Page --migration : criar uma model utilizando o migrations
+
+Database/migrations/create_pages
+
+Schema::create('pages', function (Blueprint $table) {
+        $table->id();
+        $table->string('title', 100);  // cria um campo no banco de dados com o nome de title e um varchar(100)
+        $table->string('url', 100);  // cria um campo no banco de dados com o nome de url e um varchar(100)
+        $table->longText('body'); // cria um campo no banco de dados com o nome de body e sem limite
+        $table->timestamps();
+    });
+
+
+.env
+
+// conexao com o banco de dados
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1 
+DB_PORT=3306
+DB_DATABASE=laravel
+DB_USERNAME=root
+DB_PASSWORD=
+
+Terminal 
+
+- php artisan make:controller Admin\PagesController --resource : cria uma pasta chamada Admin dentro e controllers, com o controller PagesController
+
+Caso nao funcione corretamente o servidor, use: php artisan migrate
+
+routes/web.php
+
+Route::resource('pages', 'App\Http\Controllers\Admin\PagesController');
+
+Terminal
+
+php artisan make:factory PageFactory : cria a factory
+
+database/factories/pagefactory.php
+
+use Illuminate\Support\Str;
+
+public function definition(): array
+    {
+        $name = fake()->name();
+        return [
+            'name' => $name,
+            'url' => Str::slug($name),
+            'body' => fake()->paragraphs(asText: true),
+        ];
+    }
+
+
+Terminal
+
+php artisan make:seed PagesTableSeeder : cria a seed
+
+database/seeders/PagesTableSeeder
+
+public function run(): void
+    {
+        DB::statement('TRUNCATE TABLE pages'); // limpar a tabela sempre que rodar
+        Page::factory(100)->create();  // cria 100 registros fakes
+    }
+
+
+database/seeders/DatabaseSeeder
+
+public function run(): void
+    {
+        $this->call(PagesTableSeeder::class);  // chama o arquivo PagesTableSeeder--
+    }
+
+Terminal
+
+php artisan migrate      
+php artisan db:seed
+
+toda vez que for rodar a seed:
+
+drop database
+php artisan migrate      
+php artisan db:seed
+
+
+app/http/controller/admin/pages controller
+
+ public function index()
+    {
+        $pages = Page::all();
+        // $pages = Page::paginate(10);  // utilizado para fazer paginacao, limitando a 10 registros
+        return view('admin.pages.index', compact('pages')); //chama a pagina admin/pages/index.php
+    }
+
+A classe Page estende a classe Model do Eloquent, que é o ORM do Laravel. Isso significa que a classe Page herda todas as funcionalidades da classe Model, incluindo a capacidade de interagir com o banco de dados.
+Por padrão, o Eloquent assume que o nome da tabela correspondente ao modelo é o nome da classe no plural e em minúsculas. Portanto, para o modelo Page, ele assume que a tabela no banco de dados se chama pages. Se a tabela tiver um nome diferente, você pode especificar isso na classe Page:
+O método all() é um método estático fornecido pela classe Model do Eloquent, que retorna todos os registros da tabela associada ao modelo.
+
+colocar no index
+
+{{ $pages->links() }}
+
+para paginacao
+
+PagesController
+
+public function show(string $id)
+    {
+        return view('admin.pages.show');  // chamando a tela para cada acao
+    }
+
+fazer isso para todas as paginas
+
+public function show(string $id)
+    {
+        $page = Page::findOrFail($id);  // envia os dados do id especifico para a pagina
+        return view('admin.pages.show', compact('page'));
+    }
+
+
+public function index()
+{
+    $pages = Page::paginate(10);  // envia os dados de 10 paginas para a pagina index
+    return view('admin.pages.index', compact('pages'));
+}
+
+
+{!! csrf_field() !!}  <!-- Utilizado para previnir ataque de injecao no formulario-->
+
